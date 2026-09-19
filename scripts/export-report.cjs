@@ -1,0 +1,13 @@
+const fs=require('node:fs');
+const path=require('node:path');
+const {jsPDF}=require('../vendor/jspdf.umd.min.js');
+const {autoTable}=require('../vendor/jspdf.plugin.autotable.min.js');
+const {createTerrasanaReport}=require('../informe.js');
+const [input,output]=process.argv.slice(2);
+if(!input||!output)throw new Error('Uso: node scripts/export-report.cjs respaldo.json informe.pdf');
+const data=JSON.parse(fs.readFileSync(input,'utf8'));
+if(!Array.isArray(data.casos))throw new Error('El archivo no contiene una lista de casos.');
+const report=createTerrasanaReport(data.casos,{jsPDF,autoTable});
+fs.mkdirSync(path.dirname(path.resolve(output)),{recursive:true});
+fs.writeFileSync(output,Buffer.from(report.output('arraybuffer')));
+console.log(`PDF generado: ${report.getNumberOfPages()} paginas; ${data.casos.length} caso(s).`);

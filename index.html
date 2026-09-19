@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="es-CO">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0D6E4F">
+<meta name="description" content="TERRASANA: caracterización, respuesta y seguimiento territorial en Chocó y Risaralda.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/icon-192.png">
+<link rel="icon" href="assets/icon-192.png" type="image/png">
+<title>TERRASANA CARACTERIZA · Plataforma Territorial</title>
+<link rel="preload" as="image" href="brigada-bg.jpg">
+<link rel="stylesheet" href="operacion.css">
+<link href="vendor/maplibre-gl.css" rel="stylesheet">
+<script src="vendor/maplibre-gl.js" defer></script>
+<script src="vendor/lucide.min.js" defer></script>
+<script src="vendor/jspdf.umd.min.js" defer></script>
+<script src="vendor/jspdf.plugin.autotable.min.js" defer></script>
+<style>
+:root{
+  /* Paleta institucional: verde territorial + acentos de semáforo */
+  --primary:#0D6E4F;--primary-dark:#004D40;--primary-light:#26A69A;
+  --accent:#F7A800;--accent-dark:#C57900;
+  --critical:#D32F2F;--critical-light:#FFCDD2;
+  --high:#F57C00;--high-light:#FFE0B2;
+  --medium:#43A047;--medium-light:#C8E6C9;
+  --info:#1565C0;
+  --bg:#F5F7FA;--surface:#FFFFFF;--sidebar:#0F2A24;--sidebar-hover:#1B3A32;
+  --text:#212121;--text-2:#616161;--muted:#9E9E9E;--border:#E0E0E0;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+
+/* ================= SPLASH ================= */
+.splash{position:fixed;inset:0;z-index:2000;display:flex;flex-direction:column;justify-content:center;align-items:center;color:#fff;padding:40px;transition:opacity .5s;
+  background-color:#004D40;
+  background-image:linear-gradient(135deg,rgba(0,77,64,.78) 0%,rgba(13,110,79,.82) 50%,rgba(0,77,64,.9) 100%),url("brigada-bg.jpg");
+  background-size:cover;background-position:center;background-repeat:no-repeat}
+.splash.fade-out{opacity:0;pointer-events:none}
+.splash-content{position:relative;z-index:2;text-align:center;max-width:560px;background:rgba(0,0,0,.28);backdrop-filter:blur(8px);border-radius:16px;padding:40px 30px;border:1px solid rgba(255,255,255,.2)}
+.splash-logo{position:relative;width:110px;height:110px;margin:0 auto 22px;display:flex;justify-content:center;align-items:center}
+.splash-ring{position:absolute;inset:0;border-radius:50%;border:4px solid rgba(255,255,255,.2);border-top-color:#fff;animation:spin 1.2s linear infinite}
+.splash-ring::before{content:"";position:absolute;inset:-8px;border-radius:50%;border:2px solid rgba(255,255,255,.1);animation:pulseRing 1.8s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulseRing{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.15);opacity:0}}
+.splash-brand h1{font-size:34px;font-weight:800;letter-spacing:2px;line-height:1;margin-bottom:4px;text-shadow:0 2px 12px rgba(0,0,0,.5)}
+.splash-brand h2{font-size:13px;font-weight:600;letter-spacing:5px;color:rgba(255,255,255,.85);text-shadow:0 1px 6px rgba(0,0,0,.4)}
+.splash-tagline{color:#fff;font-size:15px;margin:20px 0 26px;line-height:1.5;text-shadow:0 1px 4px rgba(0,0,0,.5)}
+.splash-tagline b{font-weight:700}
+.splash-progress{width:100%;max-width:340px;margin:0 auto}
+.splash-bar{width:100%;height:4px;background:rgba(255,255,255,.25);border-radius:2px;overflow:hidden}
+.splash-fill{height:100%;background:#fff;border-radius:2px;width:0%;transition:width .4s;box-shadow:0 0 12px rgba(255,255,255,.8)}
+.splash-msg{margin-top:14px;font-size:13px;color:#fff;font-weight:500;min-height:20px;text-shadow:0 1px 4px rgba(0,0,0,.5)}
+.splash-icons{position:absolute;top:30px;left:0;right:0;display:flex;justify-content:center;gap:10px;padding:0 20px;z-index:1;flex-wrap:wrap}
+.splash-icon{background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.3);color:#fff;padding:7px 12px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;backdrop-filter:blur(8px)}
+.splash-icon span{margin-right:5px}
+.splash-foot{position:absolute;bottom:24px;left:0;right:0;text-align:center;font-size:11px;color:#fff;line-height:1.6;z-index:2;text-shadow:0 1px 6px rgba(0,0,0,.7);padding:0 20px}
+.splash-foot b{font-weight:700;letter-spacing:1px}
+
+/* ================= AUTH ================= */
+.auth-screen{position:fixed;inset:0;display:none;justify-content:center;align-items:center;z-index:1000;padding:20px;overflow-y:auto;
+  background-color:#004D40;
+  background-image:linear-gradient(135deg,rgba(0,77,64,.72) 0%,rgba(13,110,79,.78) 50%,rgba(0,77,64,.85) 100%),url("brigada-bg.jpg");
+  background-size:cover;background-position:center;background-attachment:fixed}
+.auth-screen.active{display:flex}
+.auth-card{position:relative;z-index:2;background:#fff;border-radius:16px;padding:28px;max-width:460px;width:100%;box-shadow:0 20px 80px rgba(0,0,0,.5);margin:20px 0}
+.auth-brand{text-align:center;margin-bottom:18px}
+.auth-brand .badge-small{display:inline-block;background:#E0F2F1;color:var(--primary-dark);font-size:10px;font-weight:700;padding:3px 10px;border-radius:12px;letter-spacing:1px;margin-bottom:8px}
+.auth-brand h1{color:var(--primary);font-size:22px;font-weight:800;letter-spacing:1px}
+.auth-brand h2{color:var(--text-2);font-size:11px;letter-spacing:3px;margin-top:4px}
+.auth-brand p{color:var(--text-2);font-size:12px;margin-top:10px;line-height:1.5}
+.auth-tabs{display:flex;gap:4px;background:#F5F5F5;padding:4px;border-radius:10px;margin-bottom:18px}
+.auth-tab{flex:1;padding:10px;text-align:center;font-size:13px;font-weight:600;color:var(--text-2);cursor:pointer;border-radius:6px}
+.auth-tab.active{background:#fff;color:var(--primary);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.auth-form{display:none}
+.auth-form.active{display:block}
+.auth-form label{display:block;font-size:10px;color:var(--text-2);text-transform:uppercase;font-weight:600;margin-top:10px;margin-bottom:4px;letter-spacing:.5px}
+.auth-form input,.auth-form select{width:100%;padding:11px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;background:#fff}
+.auth-form input:focus,.auth-form select:focus{outline:none;border-color:var(--primary)}
+.role-picker{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:4px}
+.role-btn{padding:10px 4px;border:2px solid var(--border);background:#fff;border-radius:8px;cursor:pointer;text-align:center;font-size:10px;font-weight:600;color:var(--text-2)}
+.role-btn.active{border-color:var(--primary);background:#E0F2F1;color:var(--primary)}
+.role-btn .icon{font-size:18px;display:block;margin-bottom:2px}
+.auth-btn{width:100%;padding:13px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;margin-top:16px}
+.auth-btn:active{opacity:.85}
+.auth-btn:hover{background:var(--primary-dark)}
+.auth-error{background:#FFEBEE;color:var(--critical);padding:10px;border-radius:6px;font-size:12px;margin-top:12px;display:none}
+.auth-error.show{display:block}
+.auth-hint{font-size:11px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.5}
+.domain-hint{background:#E0F2F1;color:var(--primary-dark);font-size:11px;padding:8px 10px;border-radius:6px;margin-top:4px;line-height:1.5}
+.domain-hint code{background:#fff;color:var(--primary-dark);padding:1px 5px;border-radius:3px;font-family:monospace;font-size:10px}
+.demo-box{background:#FFF3E0;border:2px dashed #FF9800;border-radius:10px;padding:14px;text-align:center;margin-top:16px}
+.demo-box p{font-size:12px;color:#BF360C;margin-bottom:8px;line-height:1.4}
+.demo-box p.title{font-size:13px;font-weight:700;color:#E65100}
+.btn-demo{width:100%;padding:12px;background:linear-gradient(135deg,#FF9800,#F57C00);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 8px rgba(255,152,0,.3)}
+.divider{text-align:center;margin:18px 0 12px;position:relative}
+.divider hr{border:none;border-top:1px solid #E0E0E0}
+.divider span{background:#fff;padding:0 12px;color:var(--muted);font-size:11px;position:absolute;top:-8px;left:50%;transform:translateX(-50%);text-transform:uppercase;letter-spacing:1px}
+
+/* ================= APP LAYOUT ================= */
+.app{display:none;grid-template-columns:230px 1fr;grid-template-rows:56px 1fr;height:100vh;overflow:hidden}
+.app.active{display:grid}
+
+.topbar{grid-column:1/-1;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:16px}
+.topbar-brand{display:flex;align-items:center;gap:10px}
+.topbar-brand-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));border-radius:8px;display:flex;justify-content:center;align-items:center;color:#fff;font-weight:800;font-size:11px;letter-spacing:.5px}
+.topbar-brand-text h3{font-size:14px;font-weight:700;line-height:1.1;color:var(--primary-dark)}
+.topbar-brand-text p{font-size:11px;color:var(--text-2)}
+.topbar-badge{display:inline-block;background:#FFF3E0;color:#E65100;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;margin-left:8px;letter-spacing:.5px}
+.sync-badge{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-2);padding:5px 10px;border-radius:6px;background:#F5F5F5;margin-left:10px}
+.sync-badge.online{color:var(--medium);background:#E8F5E9}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:currentColor;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.topbar-stats{display:flex;gap:18px;margin-left:auto}
+.stat-mini{display:flex;flex-direction:column;align-items:center}
+.stat-mini .n{font-size:18px;font-weight:800;line-height:1}
+.stat-mini .lbl{font-size:9px;color:var(--text-2);text-transform:uppercase;margin-top:2px;letter-spacing:.5px}
+.topbar-user{display:flex;align-items:center;gap:10px;padding-left:18px;border-left:1px solid var(--border)}
+.user-avatar{width:34px;height:34px;background:var(--primary);color:#fff;border-radius:50%;display:flex;justify-content:center;align-items:center;font-weight:700;font-size:14px}
+.user-info{font-size:12px;line-height:1.2}
+.user-info b{display:block;font-size:13px}
+.user-info span{color:var(--text-2);font-size:11px}
+.btn-logout-top{padding:6px 10px;border:1px solid var(--border);background:transparent;border-radius:6px;font-size:11px;cursor:pointer;color:var(--text-2)}
+.btn-logout-top:hover{border-color:var(--critical);color:var(--critical)}
+
+.sidebar{background:var(--sidebar);color:#fff;overflow-y:auto;padding:16px 0}
+.side-section{padding:0 16px 8px;font-size:9px;text-transform:uppercase;letter-spacing:1.2px;color:#607D8B;margin-top:16px;font-weight:700}
+.side-section:first-child{margin-top:0}
+.side-item{padding:11px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:#B0BEC5;border-left:3px solid transparent}
+.side-item:hover{background:var(--sidebar-hover);color:#fff}
+.side-item.active{background:var(--sidebar-hover);color:#fff;border-left-color:var(--accent)}
+.side-item .icon{font-size:16px;width:20px;text-align:center}
+.side-item .badge{margin-left:auto;background:var(--critical);color:#fff;font-size:10px;padding:2px 6px;border-radius:8px;font-weight:700}
+.side-item .badge.warn{background:var(--high)}
+.side-item .badge.success{background:var(--medium)}
+.side-item.new-btn{background:linear-gradient(135deg,var(--primary),var(--primary-dark));margin:10px 12px;border-radius:8px;justify-content:center;padding:12px;font-weight:700;color:#fff}
+.side-item.new-btn:hover{background:linear-gradient(135deg,var(--primary-light),var(--primary));border-left-color:transparent}
+
+/* Vista wrappers */
+.view{display:none;overflow-y:auto;padding:24px;background:var(--bg);height:100%}
+.view.active{display:block}
+.view-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.view-header h2{font-size:22px;color:var(--primary-dark)}
+.view-header p{color:var(--text-2);font-size:13px;margin-top:2px}
+.view-header .btn-primary{padding:10px 20px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px}
+.view-header .btn-primary:hover{background:var(--primary-dark)}
+
+/* Firebase banner */
+.firebase-banner{grid-column:1/-1;background:linear-gradient(90deg,#FFF3E0,#FFE0B2);border-bottom:2px solid #FF9800;padding:8px 20px;display:flex;align-items:center;gap:12px;font-size:12px}
+.firebase-banner .icon{font-size:18px}
+.firebase-banner b{color:#E65100}
+.firebase-banner button{margin-left:auto;padding:6px 14px;background:#FF9800;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer}
+.firebase-banner button:hover{background:#F57C00}
+.firebase-banner.hidden{display:none}
+.app.has-firebase-banner{grid-template-rows:36px 56px 1fr}
+
+/* ================= FORMULARIO MULTI-PASO ================= */
+.form-wizard{max-width:900px;margin:0 auto;background:#fff;border-radius:16px;box-shadow:0 4px 12px rgba(0,0,0,.06);overflow:hidden}
+.wizard-progress{background:linear-gradient(90deg,var(--primary),var(--primary-dark));padding:20px 30px;color:#fff}
+.wizard-progress h3{font-size:16px;font-weight:700;margin-bottom:12px}
+.wizard-steps{display:flex;gap:6px;align-items:center}
+.wiz-step{flex:1;height:5px;background:rgba(255,255,255,.25);border-radius:3px;transition:background .3s;position:relative}
+.wiz-step.done{background:#fff}
+.wiz-step.current{background:var(--accent)}
+.wiz-step-num{background:rgba(255,255,255,.15);color:#fff;width:24px;height:24px;border-radius:50%;display:flex;justify-content:center;align-items:center;font-size:11px;font-weight:700;flex-shrink:0}
+.wiz-step-num.done{background:var(--accent);color:#fff}
+.wiz-step-num.current{background:#fff;color:var(--primary-dark)}
+.wizard-body{padding:32px 40px;min-height:400px}
+.wiz-title{font-size:20px;color:var(--primary-dark);margin-bottom:6px}
+.wiz-subtitle{color:var(--text-2);font-size:13px;margin-bottom:24px}
+.step-panel{display:none}
+.step-panel.active{display:block;animation:fadeSlide .3s ease-out}
+@keyframes fadeSlide{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:14px}
+.form-row.single{grid-template-columns:1fr}
+.form-row.triple{grid-template-columns:1fr 1fr 1fr}
+.form-group label{display:block;font-size:11px;color:var(--text-2);text-transform:uppercase;font-weight:600;margin-bottom:5px;letter-spacing:.4px}
+.form-group label .req{color:var(--critical);margin-left:2px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:11px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;background:#fff;transition:border-color .15s}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--primary)}
+.form-group textarea{resize:vertical;min-height:80px}
+.form-group .hint{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.4}
+
+/* Radio y checkbox como pastillas */
+.pill-group{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.pill{padding:10px 16px;border:2px solid var(--border);background:#fff;border-radius:20px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text-2);transition:all .15s;display:flex;align-items:center;gap:6px}
+.pill:hover{border-color:var(--primary-light)}
+.pill.active{border-color:var(--primary);background:#E0F2F1;color:var(--primary-dark)}
+.pill.severity-critical{border-color:var(--critical-light)}
+.pill.severity-critical.active{border-color:var(--critical);background:#FFEBEE;color:var(--critical)}
+.pill.severity-high{border-color:var(--high-light)}
+.pill.severity-high.active{border-color:var(--high);background:#FFF3E0;color:var(--high)}
+.pill.severity-medium{border-color:var(--medium-light)}
+.pill.severity-medium.active{border-color:var(--medium);background:#E8F5E9;color:var(--medium)}
+.pill input{display:none}
+.pill .dot{width:8px;height:8px;border-radius:50%;background:currentColor;opacity:.5}
+.pill.active .dot{opacity:1}
+
+/* Checkbox grid */
+.check-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+.check-item{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;transition:all .15s}
+.check-item:hover{border-color:var(--primary-light);background:#F9FBFA}
+.check-item.checked{border-color:var(--primary);background:#E0F2F1}
+.check-item input{margin-top:2px}
+.check-item .lbl{font-size:13px;line-height:1.4;flex:1}
+.check-item .lbl b{display:block;font-size:13px;color:var(--text);margin-bottom:2px}
+.check-item .lbl small{font-size:11px;color:var(--text-2)}
+
+/* Escala Likert */
+.likert-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);gap:16px}
+.likert-row:last-child{border-bottom:none}
+.likert-question{flex:1;font-size:13px;line-height:1.5}
+.likert-scale{display:flex;gap:4px;flex-shrink:0}
+.likert-btn{width:36px;height:36px;border:2px solid var(--border);background:#fff;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;color:var(--text-2);transition:all .15s}
+.likert-btn:hover{border-color:var(--primary)}
+.likert-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+.wizard-footer{background:#F9FBFA;padding:20px 40px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border)}
+.btn-nav{padding:11px 24px;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px}
+.btn-nav.prev{background:#E0E0E0;color:var(--text)}
+.btn-nav.next{background:var(--primary);color:#fff}
+.btn-nav.next:hover{background:var(--primary-dark)}
+.btn-nav.save{background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:#fff;box-shadow:0 4px 12px rgba(247,168,0,.3)}
+.btn-nav:disabled{opacity:.4;cursor:not-allowed}
+.wizard-info{font-size:12px;color:var(--text-2);text-align:center}
+.wizard-info b{color:var(--primary-dark)}
+
+/* Panel de puntaje en vivo */
+.score-panel{position:sticky;top:0;background:linear-gradient(135deg,#fff,#F9FBFA);padding:16px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:16px}
+.score-info{flex:1}
+.score-info .lbl{font-size:10px;color:var(--text-2);text-transform:uppercase;letter-spacing:1px;font-weight:700}
+.score-info .val{font-size:22px;font-weight:800;color:var(--primary-dark)}
+.score-indicator{width:80px;height:80px;border-radius:50%;display:flex;justify-content:center;align-items:center;font-size:32px;transition:all .3s;position:relative}
+.score-indicator.tbd{background:#F5F5F5;color:var(--muted)}
+.score-indicator.critical{background:var(--critical);color:#fff;box-shadow:0 4px 20px rgba(211,47,47,.4)}
+.score-indicator.high{background:var(--high);color:#fff;box-shadow:0 4px 20px rgba(245,124,0,.4)}
+.score-indicator.medium{background:var(--medium);color:#fff;box-shadow:0 4px 20px rgba(67,160,71,.4)}
+.score-priority{font-size:11px;font-weight:800;color:var(--text-2);text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+.score-priority.critical{color:var(--critical)}
+.score-priority.high{color:var(--high)}
+.score-priority.medium{color:var(--medium)}
+
+/* Resultado final */
+.result-card{max-width:900px;margin:0 auto;background:#fff;border-radius:16px;box-shadow:0 4px 12px rgba(0,0,0,.06);overflow:hidden}
+.result-header{padding:40px;text-align:center;color:#fff;position:relative}
+.result-header.critical{background:linear-gradient(135deg,#B71C1C,#7F0000)}
+.result-header.high{background:linear-gradient(135deg,#E65100,#BF360C)}
+.result-header.medium{background:linear-gradient(135deg,#2E7D32,#1B5E20)}
+.result-icon{width:100px;height:100px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;justify-content:center;align-items:center;font-size:56px;margin:0 auto 20px;border:4px solid rgba(255,255,255,.3)}
+.result-header h2{font-size:32px;font-weight:800;margin-bottom:6px;letter-spacing:1px}
+.result-header p{font-size:14px;opacity:.9;line-height:1.5}
+.result-score{position:absolute;top:20px;right:20px;background:rgba(0,0,0,.3);color:#fff;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700}
+.result-body{padding:30px 40px}
+.result-section{margin-bottom:24px}
+.result-section h4{font-size:14px;color:var(--primary-dark);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;font-weight:700;display:flex;align-items:center;gap:8px;border-bottom:2px solid #E0F2F1;padding-bottom:8px}
+.result-list{list-style:none;padding:0}
+.result-list li{padding:8px 0;font-size:13px;color:var(--text);display:flex;gap:10px;align-items:flex-start;line-height:1.5}
+.result-list li b{color:var(--text);font-weight:600;min-width:140px}
+.result-list li .check{color:var(--medium);font-size:16px;flex-shrink:0}
+.route-box{background:#F9FBFA;border-left:4px solid var(--primary);border-radius:8px;padding:16px 20px;margin-top:16px}
+.route-box.critical{border-left-color:var(--critical);background:#FFEBEE}
+.route-box.high{border-left-color:var(--high);background:#FFF3E0}
+.route-box.medium{border-left-color:var(--medium);background:#E8F5E9}
+.route-box h5{font-size:14px;font-weight:700;margin-bottom:6px;color:var(--text)}
+.route-box p{font-size:12px;color:var(--text-2);line-height:1.5}
+.route-box .actors{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.route-box .actor{background:#fff;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:600;color:var(--text);border:1px solid var(--border)}
+.result-actions{display:flex;gap:10px;margin-top:24px}
+.result-actions button{flex:1;padding:14px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer}
+.btn-save-case{background:var(--primary);color:#fff}
+.btn-save-case:hover{background:var(--primary-dark)}
+.btn-new-case{background:#E0E0E0;color:var(--text)}
+
+</style>
+<link rel="stylesheet" href="centro-operaciones.css">
+</head>
+<body>
+
+<!-- ================= SPLASH ================= -->
+<div id="splash" class="splash" role="status" aria-label="Cargando TERRASANA">
+  <div class="splash-icons">
+    <div class="splash-icon"><span>🎯</span>IDENTIFICAR</div>
+    <div class="splash-icon"><span>📊</span>PRIORIZAR</div>
+    <div class="splash-icon"><span>🤝</span>ORIENTAR</div>
+    <div class="splash-icon"><span>🌱</span>RECUPERAR</div>
+  </div>
+
+  <div class="splash-content">
+    <div class="splash-logo">
+      <div class="splash-ring"></div>
+      <i data-lucide="activity" class="loader-brand-icon" aria-hidden="true"></i>
+    </div>
+
+    <div class="splash-brand">
+      <h1>TERRASANA</h1>
+      <h2>CENTRO DE RESPUESTA TERRITORIAL</h2>
+    </div>
+
+    <p class="splash-tagline">
+      Cada reporte, una respuesta.<br>
+      <span style="font-size:12px;opacity:.85">Chocó / Risaralda</span>
+    </p>
+
+    <div class="splash-progress">
+      <div class="loader-progress-label"><span>PREPARANDO EL TERRITORIO</span><b id="splash-percent">0%</b></div>
+      <div class="splash-bar" role="progressbar" aria-label="Inicio de la aplicación" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="splash-progressbar"><div class="splash-fill" id="splash-fill"></div></div>
+      <p class="splash-msg" id="splash-msg">Iniciando sistema…</p>
+    </div>
+  </div>
+
+  <p class="splash-foot">
+    <b>MACROPROYECTO TERRASANA RESILIENCIA</b><br>
+    UNAD — Minciencias · Convocatoria 001 de 2026<br>
+    <span style="font-size:10px;opacity:.85">Componente: Identificación y priorización territorial</span>
+  </p>
+</div>
+
+<!-- ================= AUTH ================= -->
+<div id="auth" class="auth-screen">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <span class="badge-small">🏛️ SISTEMA INSTITUCIONAL</span>
+      <h1>TERRASANA CARACTERIZA</h1>
+      <h2>PLATAFORMA TERRITORIAL</h2>
+      <p>Caracterización, priorización y enrutamiento de población adulta afectada por el sismo de 2026 en <b>Chocó</b> y <b>Risaralda</b></p>
+    </div>
+
+    <div class="auth-tabs">
+      <div class="auth-tab active" data-tab="login" onclick="switchTab('login')">Iniciar sesión</div>
+      <div class="auth-tab" data-tab="register" onclick="switchTab('register')">Registro institucional</div>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="form-login" class="auth-form active">
+      <label>Correo institucional</label>
+      <input type="email" id="l-email" placeholder="tu.usuario@entidad.gov.co">
+      <label>Contraseña</label>
+      <input type="password" id="l-pass" placeholder="Tu contraseña">
+      <div id="l-error" class="auth-error"></div>
+      <button class="auth-btn" onclick="doLogin()">Ingresar</button>
+
+      <div class="divider"><hr><span>o</span></div>
+
+      <div class="demo-box">
+        <p class="title">¿Aún no tienes cuenta institucional?</p>
+        <p>Acceso de demostración para <b>Chocó y Risaralda</b>. Registra casos de prueba y consulta sus resultados.</p>
+        <button onclick="doDemoLogin()" class="btn-demo">🚀 Ingresar en versión demo</button>
+      </div>
+    </div>
+
+    <!-- REGISTRO -->
+    <div id="form-register" class="auth-form">
+      <label>Nombre completo</label>
+      <input type="text" id="r-nombre" placeholder="Carlos Andrés Ramírez López">
+      <label>Correo institucional</label>
+      <input type="email" id="r-email" placeholder="tu.usuario@entidad.gov.co">
+      <div class="domain-hint"><b>Dominios aceptados:</b> <code>.gov.co</code> · <code>.edu.co</code> · <code>.mil.co</code> · <code>.org.co</code></div>
+      <label>Cargo</label>
+      <input type="text" id="r-cargo" placeholder="Coordinadora de gestión del riesgo">
+      <label>Entidad</label>
+      <input type="text" id="r-entidad" placeholder="Alcaldía de Quibdó · Secretaría de Salud">
+      <label>Territorio asignado</label>
+      <select id="r-depto">
+        <option value="">Selecciona…</option>
+        <option value="Chocó">Chocó</option>
+        <option value="Risaralda">Risaralda</option>
+        <option value="Ambos">Ambos departamentos</option>
+      </select>
+      <label>Rol en el sistema</label>
+      <div class="role-picker">
+        <div class="role-btn active" data-role="brigada" onclick="selectRole('brigada')"><span class="icon">🚑</span>Brigada</div>
+        <div class="role-btn" data-role="coordinador" onclick="selectRole('coordinador')"><span class="icon">📋</span>Coord. UNAD</div>
+        <div class="role-btn" data-role="entidad" onclick="selectRole('entidad')"><span class="icon">🏛️</span>Entidad</div>
+        <div class="role-btn" data-role="estudiante" onclick="selectRole('estudiante')"><span class="icon">🎓</span>Practicante</div>
+      </div>
+      <label>Contraseña (mín 8, letras + números)</label>
+      <input type="password" id="r-pass" placeholder="Contraseña segura">
+      <label>Confirmar contraseña</label>
+      <input type="password" id="r-pass2" placeholder="Repite tu contraseña">
+      <div id="r-error" class="auth-error"></div>
+      <button class="auth-btn" onclick="doRegister()">Crear cuenta institucional</button>
+      <p class="auth-hint">Al registrarte aceptas el tratamiento de datos conforme a la Ley 1581 de 2012.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ================= APP (contenedor, se completa en Parte 2 y 3) ================= -->
+<div id="app" class="app">
+  <div id="firebase-banner" class="firebase-banner">
+    <div class="storage-caption"><i data-lucide="hard-drive" aria-hidden="true"></i><b>Espacio local</b><span id="storage-status">Sin sincronización entre dispositivos.</span></div>
+    <button onclick="exportarRespaldo()" title="Descargar copia de los casos"><i data-lucide="download" aria-hidden="true"></i><span>Respaldo</span></button>
+  </div>
+
+  <div class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-brand-icon"><i data-lucide="activity" aria-hidden="true"></i></div>
+      <div class="topbar-brand-text">
+        <h3>TERRASANA <span class="topbar-badge">CENTRO TERRITORIAL</span></h3>
+        <p>Chocó / Risaralda · Coordinación y respuesta</p>
+      </div>
+    </div>
+    <div id="sync-badge" class="sync-badge"><span class="sync-dot"></span><span id="sync-text">Sesión local</span></div>
+    <div class="topbar-stats">
+      <div class="stat-mini"><div class="n" id="stat-total">0</div><div class="lbl">Casos</div></div>
+      <div class="stat-mini"><div class="n" id="stat-critical" style="color:var(--critical)">0</div><div class="lbl">Críticos</div></div>
+      <div class="stat-mini"><div class="n" id="stat-high" style="color:var(--high)">0</div><div class="lbl">Altos</div></div>
+      <div class="stat-mini"><div class="n" id="stat-medium" style="color:var(--medium)">0</div><div class="lbl">Seguim.</div></div>
+    </div>
+    <div class="topbar-user">
+      <button id="install-app" class="icon-button" hidden onclick="installApplication()" title="Instalar TERRASANA" aria-label="Instalar TERRASANA"><i data-lucide="download" aria-hidden="true"></i></button>
+      <div class="user-avatar" id="user-avatar">U</div>
+      <div class="user-info"><b id="user-name">—</b><span id="user-role">—</span></div>
+      <button class="btn-logout-top icon-button" onclick="doLogout()" aria-label="Cerrar sesión" title="Cerrar sesión"><i data-lucide="log-out" aria-hidden="true"></i></button>
+    </div>
+    <select id="mobile-territory" class="mobile-territory" aria-label="Territorio" onchange="filterDepartment(this.value)"><option value="all">Chocó y Risaralda</option><option value="Chocó">Chocó</option><option value="Risaralda">Risaralda</option></select>
+  </div>
+
+  <div class="sidebar">
+    <button class="side-item new-btn" onclick="setView('form')"><i data-lucide="plus" aria-hidden="true"></i><span>Nuevo registro</span></button>
+
+    <div class="side-section">Operación</div>
+    <button class="side-item" data-view="map" onclick="setView('map')"><i data-lucide="map" aria-hidden="true"></i><span>Mapa territorial</span></button>
+    <button class="side-item" data-view="bandeja" onclick="setView('bandeja')"><i data-lucide="columns-3" aria-hidden="true"></i><span>Bandeja de casos</span></button>
+    <button class="side-item" data-view="reports" onclick="setView('reports')"><i data-lucide="chart-no-axes-combined" aria-hidden="true"></i><span>Reportes</span></button>
+
+    <div class="side-section">Filtro rápido</div>
+    <button class="side-item" onclick="filterDepartment('all')" data-dep="all"><i data-lucide="globe-2" aria-hidden="true"></i><span>Ambos departamentos</span></button>
+    <button class="side-item" onclick="filterDepartment('Chocó')" data-dep="Chocó"><i data-lucide="map-pin" aria-hidden="true"></i><span>Chocó</span></button>
+    <button class="side-item" onclick="filterDepartment('Risaralda')" data-dep="Risaralda"><i data-lucide="map-pin" aria-hidden="true"></i><span>Risaralda</span></button>
+
+    <div class="side-section">Bandejas por rol</div>
+    <button class="side-item" onclick="setView('bandeja');setBandejaFilter('critical')"><span class="status-dot critical"></span><span>Prioridad crítica</span><span class="badge" id="sb-critical">0</span></button>
+    <button class="side-item" onclick="setView('bandeja');setBandejaFilter('high')"><span class="status-dot high"></span><span>Prioridad alta</span><span class="badge warn" id="sb-high">0</span></button>
+    <button class="side-item" onclick="setView('bandeja');setBandejaFilter('medium')"><span class="status-dot medium"></span><span>Seguimiento</span><span class="badge success" id="sb-medium">0</span></button>
+    <div class="sidebar-foot"><i data-lucide="shield-check" aria-hidden="true"></i><span>Gestión territorial<br><b>UNAD · Piloto CTeI</b></span></div>
+  </div>
+
+  <!-- Aquí van las vistas: form, map, bandeja, reports (se completan en las siguientes partes) -->
+  <div id="view-form" class="view">
+    <div class="view-header">
+      <div><h2>➕ Nueva caracterización</h2><p>Ficha de la persona afectada · el sistema calcula el semáforo de prioridad automáticamente</p></div>
+      <button class="btn-primary" onclick="setView('map')" style="background:#E0E0E0;color:var(--text)">✕ Cancelar</button>
+    </div>
+
+    <div class="form-wizard">
+      <!-- Panel de puntaje en vivo -->
+      <div class="score-panel">
+        <div class="score-info">
+          <div class="lbl">Puntaje de prioridad en vivo</div>
+          <div class="val"><span id="live-score">0</span> <span style="font-size:12px;color:var(--text-2);font-weight:400">puntos</span></div>
+          <div class="score-priority" id="live-priority">Sin datos suficientes</div>
+        </div>
+        <div style="text-align:center">
+          <div class="score-indicator tbd" id="live-indicator">?</div>
+        </div>
+      </div>
+
+      <!-- Barra de progreso -->
+      <div class="wizard-progress">
+        <h3 id="wiz-title-top">Paso 1 de 6 · Datos personales</h3>
+        <div class="wizard-steps">
+          <div class="wiz-step current" data-step="1"></div>
+          <div class="wiz-step" data-step="2"></div>
+          <div class="wiz-step" data-step="3"></div>
+          <div class="wiz-step" data-step="4"></div>
+          <div class="wiz-step" data-step="5"></div>
+          <div class="wiz-step" data-step="6"></div>
+        </div>
+      </div>
+
+      <div class="wizard-body">
+
+        <!-- PASO 1: DATOS PERSONALES -->
+        <div class="step-panel active" data-step="1">
+          <h3 class="wiz-title">👤 Identificación personal</h3>
+          <p class="wiz-subtitle">Datos básicos de la persona afectada</p>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nombres <span class="req">*</span></label>
+              <input type="text" id="f-nombres" placeholder="Ej: María Fernanda">
+            </div>
+            <div class="form-group">
+              <label>Apellidos <span class="req">*</span></label>
+              <input type="text" id="f-apellidos" placeholder="Ej: Rodríguez López">
+            </div>
+          </div>
+
+          <div class="form-row triple">
+            <div class="form-group">
+              <label>Tipo doc <span class="req">*</span></label>
+              <select id="f-tipo-doc">
+                <option value="CC">CC</option>
+                <option value="TI">TI</option>
+                <option value="CE">CE</option>
+                <option value="PP">PP</option>
+                <option value="OT">Otro</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Número documento <span class="req">*</span></label>
+              <input type="text" id="f-num-doc" placeholder="Ej: 1234567890">
+            </div>
+            <div class="form-group">
+              <label>Edad <span class="req">*</span></label>
+              <input type="number" id="f-edad" placeholder="19-59" min="19" max="59" oninput="calcularScore()">
+              <p class="hint">Población objetivo: 19-59 años</p>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Sexo</label>
+              <div class="pill-group">
+                <label class="pill" onclick="togglePill(this,'f-sexo','F')"><input type="radio" name="f-sexo" value="F">👩 Femenino</label>
+                <label class="pill" onclick="togglePill(this,'f-sexo','M')"><input type="radio" name="f-sexo" value="M">👨 Masculino</label>
+                <label class="pill" onclick="togglePill(this,'f-sexo','O')"><input type="radio" name="f-sexo" value="O">⚧ Otro</label>
+                <label class="pill" onclick="togglePill(this,'f-sexo','N')"><input type="radio" name="f-sexo" value="N">🔒 Prefiere no responder</label>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Autoreconocimiento étnico</label>
+              <select id="f-etnia">
+                <option value="mestizo">Mestizo/a</option>
+                <option value="afro">Afrocolombiano/a</option>
+                <option value="indigena">Indígena</option>
+                <option value="raizal">Raizal / Palenquero</option>
+                <option value="rrom">Rrom / Gitano</option>
+                <option value="ninguno">Ninguno</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Teléfono de contacto</label>
+              <input type="tel" id="f-telefono" placeholder="+57 300 000 0000">
+            </div>
+            <div class="form-group">
+              <label>Correo (opcional)</label>
+              <input type="email" id="f-email" placeholder="correo@ejemplo.com">
+            </div>
+          </div>
+        </div>
+
+        <!-- PASO 2: UBICACIÓN -->
+        <div class="step-panel" data-step="2">
+          <h3 class="wiz-title">📍 Ubicación territorial</h3>
+          <p class="wiz-subtitle">Departamento, municipio y zona donde reside la persona afectada</p>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Departamento <span class="req">*</span></label>
+              <select id="f-departamento" onchange="cargarMunicipios();calcularScore()">
+                <option value="">Selecciona…</option>
+                <option value="Chocó">Chocó</option>
+                <option value="Risaralda">Risaralda</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Municipio <span class="req">*</span></label>
+              <select id="f-municipio">
+                <option value="">Selecciona departamento primero</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Vereda / barrio / comuna</label>
+              <input type="text" id="f-vereda" placeholder="Ej: Vereda La Esperanza, Barrio Cuba">
+            </div>
+            <div class="form-group">
+              <label>Zona</label>
+              <div class="pill-group">
+                <label class="pill" onclick="togglePill(this,'f-zona','urbana')"><input type="radio" name="f-zona" value="urbana">🏙️ Urbana</label>
+                <label class="pill" onclick="togglePill(this,'f-zona','rural')"><input type="radio" name="f-zona" value="rural">🌾 Rural</label>
+                <label class="pill" onclick="togglePill(this,'f-zona','rural-dispersa')"><input type="radio" name="f-zona" value="rural-dispersa">🏞️ Rural dispersa</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Dirección de referencia</label>
+              <input type="text" id="f-direccion" placeholder="Ej: A 200m de la Escuela Rural">
+            </div>
+            <div class="form-group">
+              <label>Coordenadas GPS (opcional)</label>
+              <div style="display:flex;gap:6px">
+                <input type="text" id="f-coords" placeholder="Ej: 5.6947, -76.6611" style="flex:1" oninput="this.dataset.source='manual';delete this.dataset.accuracy">
+                <button type="button" onclick="capturarUbicacion()" style="padding:0 14px;background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;white-space:nowrap">📍 Capturar</button>
+              </div>
+              <p class="hint">Capturar usa la ubicación de este dispositivo. Sin coordenadas se muestra una referencia aproximada del municipio.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- PASO 3: VIVIENDA -->
+        <div class="step-panel" data-step="3">
+          <h3 class="wiz-title">🏠 Vivienda y servicios básicos</h3>
+          <p class="wiz-subtitle">Estado de la vivienda después del sismo</p>
+
+          <div class="form-group" style="margin-bottom:20px">
+            <label>Estado de la vivienda <span class="req">*</span></label>
+            <div class="pill-group">
+              <label class="pill severity-critical" onclick="togglePill(this,'f-vivienda','destruida');calcularScore()"><input type="radio" name="f-vivienda" value="destruida"><span class="dot"></span>Destruida totalmente</label>
+              <label class="pill severity-high" onclick="togglePill(this,'f-vivienda','danada');calcularScore()"><input type="radio" name="f-vivienda" value="danada"><span class="dot"></span>Con daños graves</label>
+              <label class="pill severity-medium" onclick="togglePill(this,'f-vivienda','habitable');calcularScore()"><input type="radio" name="f-vivienda" value="habitable"><span class="dot"></span>Habitable con daños menores</label>
+              <label class="pill" onclick="togglePill(this,'f-vivienda','sin-danos');calcularScore()"><input type="radio" name="f-vivienda" value="sin-danos"><span class="dot"></span>Sin daños</label>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom:20px">
+            <label>Servicios básicos con los que cuenta actualmente</label>
+            <div class="check-grid">
+              <label class="check-item" onclick="toggleCheck(this,'agua');calcularScore()"><input type="checkbox" data-key="agua"><div class="lbl"><b>💧 Agua potable</b><small>Acueducto funcional</small></div></label>
+              <label class="check-item" onclick="toggleCheck(this,'luz');calcularScore()"><input type="checkbox" data-key="luz"><div class="lbl"><b>💡 Energía eléctrica</b><small>Servicio restablecido</small></div></label>
+              <label class="check-item" onclick="toggleCheck(this,'saneamiento');calcularScore()"><input type="checkbox" data-key="saneamiento"><div class="lbl"><b>🚽 Saneamiento</b><small>Alcantarillado o pozo</small></div></label>
+              <label class="check-item" onclick="toggleCheck(this,'gas');calcularScore()"><input type="checkbox" data-key="gas"><div class="lbl"><b>🔥 Gas / cocina</b><small>Para preparar alimentos</small></div></label>
+              <label class="check-item" onclick="toggleCheck(this,'comunicaciones');calcularScore()"><input type="checkbox" data-key="comunicaciones"><div class="lbl"><b>📶 Comunicaciones</b><small>Señal celular / internet</small></div></label>
+              <label class="check-item" onclick="toggleCheck(this,'alimentos');calcularScore()"><input type="checkbox" data-key="alimentos"><div class="lbl"><b>🍽️ Acceso a alimentos</b><small>Al menos 2 comidas al día</small></div></label>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>¿Se encuentra en albergue temporal?</label>
+              <div class="pill-group">
+                <label class="pill" onclick="togglePill(this,'f-albergue','si');calcularScore()"><input type="radio" name="f-albergue" value="si">Sí</label>
+                <label class="pill" onclick="togglePill(this,'f-albergue','no');calcularScore()"><input type="radio" name="f-albergue" value="no">No</label>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>¿Necesita refugio inmediato?</label>
+              <div class="pill-group">
+                <label class="pill severity-critical" onclick="togglePill(this,'f-refugio','urgente');calcularScore()"><input type="radio" name="f-refugio" value="urgente"><span class="dot"></span>Urgente</label>
+                <label class="pill severity-high" onclick="togglePill(this,'f-refugio','pronto');calcularScore()"><input type="radio" name="f-refugio" value="pronto"><span class="dot"></span>Pronto</label>
+                <label class="pill severity-medium" onclick="togglePill(this,'f-refugio','no');calcularScore()"><input type="radio" name="f-refugio" value="no"><span class="dot"></span>No</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PASO 4: SALUD -->
+        <div class="step-panel" data-step="4">
+          <h3 class="wiz-title">🏥 Situación de salud</h3>
+          <p class="wiz-subtitle">Condiciones médicas y necesidades de atención</p>
+
+          <div class="form-group" style="margin-bottom:20px">
+            <label>¿Sufrió lesiones durante el sismo?</label>
+            <div class="pill-group">
+              <label class="pill severity-critical" onclick="togglePill(this,'f-lesiones','graves');calcularScore()"><input type="radio" name="f-lesiones" value="graves"><span class="dot"></span>Sí — lesiones graves</label>
+              <label class="pill severity-high" onclick="togglePill(this,'f-lesiones','moderadas');calcularScore()"><input type="radio" name="f-lesiones" value="moderadas"><span class="dot"></span>Sí — moderadas</label>
+              <label class="pill severity-medium" onclick="togglePill(this,'f-lesiones','leves');calcularScore()"><input type="radio" name="f-lesiones" value="leves"><span class="dot"></span>Sí — leves</label>
+              <label class="pill" onclick="togglePill(this,'f-lesiones','no');calcularScore()"><input type="radio" name="f-lesiones" value="no">No</label>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom:20px">
+            <label>Condiciones de salud previas al sismo</label>
+            <div class="check-grid">
+              <label class="check-item" onclick="toggleCheck(this,'cronica');calcularScore()"><input type="checkbox" data-key="cronica"><div class="lbl"><b>💊 Enfermedad crónica</b><small>Hipertensión, diabetes, EPOC, etc.</small></div></label>
+              <label class="check-item" onclick="toggleCheck(this,'discapacidad');calcularScore()"><input type="checkbox" data-key="discapacidad"><div class="lbl"><b>♿ Discapacidad</b><small>Física, sensorial o cognitiva</small></div></label>
+              <label class="check-item" onclick="toggleCheck(this,'mental');calcularScore()"><input type="checkbox" data-key="mental"><div class="lbl"><b>🧠 Trastorno mental</b><small>Diagnóstico previo psiquiátrico</small></div></label>
+              <label class="check-item" onclick="toggleCheck(this,'embarazo');calcularScore()"><input type="checkbox" data-key="embarazo"><div class="lbl"><b>🤰 Embarazo</b><small>Actualmente en gestación</small></div></label>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>¿Requiere medicación diaria?</label>
+              <div class="pill-group">
+                <label class="pill severity-critical" onclick="togglePill(this,'f-medicacion','sin-acceso');calcularScore()"><input type="radio" name="f-medicacion" value="sin-acceso"><span class="dot"></span>Sí, sin acceso</label>
+                <label class="pill severity-high" onclick="togglePill(this,'f-medicacion','limitado');calcularScore()"><input type="radio" name="f-medicacion" value="limitado"><span class="dot"></span>Sí, acceso limitado</label>
+                <label class="pill" onclick="togglePill(this,'f-medicacion','con-acceso');calcularScore()"><input type="radio" name="f-medicacion" value="con-acceso">Sí, con acceso</label>
+                <label class="pill" onclick="togglePill(this,'f-medicacion','no');calcularScore()"><input type="radio" name="f-medicacion" value="no">No requiere</label>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>¿Está afiliado/a al sistema de salud?</label>
+              <div class="pill-group">
+                <label class="pill" onclick="togglePill(this,'f-eps','contributivo')"><input type="radio" name="f-eps" value="contributivo">Contributivo</label>
+                <label class="pill" onclick="togglePill(this,'f-eps','subsidiado')"><input type="radio" name="f-eps" value="subsidiado">Subsidiado</label>
+                <label class="pill severity-high" onclick="togglePill(this,'f-eps','no');calcularScore()"><input type="radio" name="f-eps" value="no"><span class="dot"></span>No afiliado</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Observaciones de salud (opcional)</label>
+            <textarea id="f-obs-salud" placeholder="Otras condiciones relevantes, tratamientos, alergias…"></textarea>
+          </div>
+        </div>
+
+        <!-- PASO 5: FAMILIA Y ECONOMÍA -->
+        <div class="step-panel" data-step="5">
+          <h3 class="wiz-title">👨‍👩‍👧 Familia y situación económica</h3>
+          <p class="wiz-subtitle">Composición del hogar y afectación económica</p>
+
+          <div class="form-row triple">
+            <div class="form-group">
+              <label>Personas en el hogar</label>
+              <input type="number" id="f-personas-hogar" min="1" max="20" value="1" placeholder="1">
+            </div>
+            <div class="form-group">
+              <label>Menores de edad a cargo</label>
+              <input type="number" id="f-menores" min="0" max="15" value="0" placeholder="0" oninput="calcularScore()">
+            </div>
+            <div class="form-group">
+              <label>Adultos mayores (60+) a cargo</label>
+              <input type="number" id="f-mayores" min="0" max="10" value="0" placeholder="0" oninput="calcularScore()">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>¿Es jefe/a de hogar?</label>
+              <div class="pill-group">
+                <label class="pill severity-high" onclick="togglePill(this,'f-jefe','si');calcularScore()"><input type="radio" name="f-jefe" value="si"><span class="dot"></span>Sí</label>
+                <label class="pill" onclick="togglePill(this,'f-jefe','no')"><input type="radio" name="f-jefe" value="no">No</label>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Situación laboral actual</label>
+              <div class="pill-group">
+                <label class="pill severity-critical" onclick="togglePill(this,'f-ingresos','sin-ingresos');calcularScore()"><input type="radio" name="f-ingresos" value="sin-ingresos"><span class="dot"></span>Sin ingresos</label>
+                <label class="pill severity-high" onclick="togglePill(this,'f-ingresos','informales');calcularScore()"><input type="radio" name="f-ingresos" value="informales"><span class="dot"></span>Informal</label>
+                <label class="pill severity-medium" onclick="togglePill(this,'f-ingresos','reducidos');calcularScore()"><input type="radio" name="f-ingresos" value="reducidos"><span class="dot"></span>Reducido</label>
+                <label class="pill" onclick="togglePill(this,'f-ingresos','estables');calcularScore()"><input type="radio" name="f-ingresos" value="estables">Estable</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom:20px">
+            <label>Pérdidas económicas por el sismo</label>
+            <div class="check-grid">
+              <label class="check-item" onclick="toggleCheck(this,'perdida-empleo');calcularScore()"><input type="checkbox" data-key="perdida-empleo"><div class="lbl"><b>💼 Pérdida de empleo</b><small>Empresa/actividad cerrada</small></div></label>
+              <label class="check-item" onclick="toggleCheck(this,'perdida-cultivo');calcularScore()"><input type="checkbox" data-key="perdida-cultivo"><div class="lbl"><b>🌾 Pérdida de cultivos o ganado</b><small>Agricultura de subsistencia</small></div></label>
+              <label class="check-item" onclick="toggleCheck(this,'perdida-negocio');calcularScore()"><input type="checkbox" data-key="perdida-negocio"><div class="lbl"><b>🏪 Pérdida del negocio</b><small>Local, mercancía o equipos</small></div></label>
+              <label class="check-item" onclick="toggleCheck(this,'perdida-herramientas');calcularScore()"><input type="checkbox" data-key="perdida-herramientas"><div class="lbl"><b>🔧 Pérdida de herramientas</b><small>Instrumentos de trabajo</small></div></label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>¿Cuenta con red de apoyo familiar/comunitaria?</label>
+            <div class="pill-group">
+              <label class="pill" onclick="togglePill(this,'f-apoyo','fuerte')"><input type="radio" name="f-apoyo" value="fuerte">Fuerte</label>
+              <label class="pill severity-medium" onclick="togglePill(this,'f-apoyo','moderada')"><input type="radio" name="f-apoyo" value="moderada">Moderada</label>
+              <label class="pill severity-high" onclick="togglePill(this,'f-apoyo','debil');calcularScore()"><input type="radio" name="f-apoyo" value="debil"><span class="dot"></span>Débil</label>
+              <label class="pill severity-critical" onclick="togglePill(this,'f-apoyo','sin-red');calcularScore()"><input type="radio" name="f-apoyo" value="sin-red"><span class="dot"></span>Sin red de apoyo</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- PASO 6: AFECTACIÓN PSICOSOCIAL -->
+        <div class="step-panel" data-step="6">
+          <h3 class="wiz-title">🧠 Afectación psicosocial</h3>
+          <p class="wiz-subtitle">Escala breve de tamizaje · marca en escala 1 (nada) a 5 (siempre)</p>
+
+          <div style="background:#F9FBFA;border-radius:12px;padding:8px 20px">
+            <div class="likert-row">
+              <div class="likert-question"><b>Miedo o angustia intensa</b><br><small style="color:var(--text-2)">¿Con qué frecuencia siente miedo o angustia intensa desde el sismo?</small></div>
+              <div class="likert-scale" data-question="q1">
+                <button class="likert-btn" onclick="setLikert('q1',1,this)">1</button>
+                <button class="likert-btn" onclick="setLikert('q1',2,this)">2</button>
+                <button class="likert-btn" onclick="setLikert('q1',3,this)">3</button>
+                <button class="likert-btn" onclick="setLikert('q1',4,this)">4</button>
+                <button class="likert-btn" onclick="setLikert('q1',5,this)">5</button>
+              </div>
+            </div>
+
+            <div class="likert-row">
+              <div class="likert-question"><b>Dificultad para dormir</b><br><small style="color:var(--text-2)">Insomnio, pesadillas o descanso interrumpido</small></div>
+              <div class="likert-scale" data-question="q2">
+                <button class="likert-btn" onclick="setLikert('q2',1,this)">1</button>
+                <button class="likert-btn" onclick="setLikert('q2',2,this)">2</button>
+                <button class="likert-btn" onclick="setLikert('q2',3,this)">3</button>
+                <button class="likert-btn" onclick="setLikert('q2',4,this)">4</button>
+                <button class="likert-btn" onclick="setLikert('q2',5,this)">5</button>
+              </div>
+            </div>
+
+            <div class="likert-row">
+              <div class="likert-question"><b>Aislamiento o retiro social</b><br><small style="color:var(--text-2)">Evita interactuar con familia o comunidad</small></div>
+              <div class="likert-scale" data-question="q3">
+                <button class="likert-btn" onclick="setLikert('q3',1,this)">1</button>
+                <button class="likert-btn" onclick="setLikert('q3',2,this)">2</button>
+                <button class="likert-btn" onclick="setLikert('q3',3,this)">3</button>
+                <button class="likert-btn" onclick="setLikert('q3',4,this)">4</button>
+                <button class="likert-btn" onclick="setLikert('q3',5,this)">5</button>
+              </div>
+            </div>
+
+            <div class="likert-row">
+              <div class="likert-question"><b>Recuerdos intrusivos del sismo</b><br><small style="color:var(--text-2)">Imágenes, sonidos o pensamientos recurrentes</small></div>
+              <div class="likert-scale" data-question="q4">
+                <button class="likert-btn" onclick="setLikert('q4',1,this)">1</button>
+                <button class="likert-btn" onclick="setLikert('q4',2,this)">2</button>
+                <button class="likert-btn" onclick="setLikert('q4',3,this)">3</button>
+                <button class="likert-btn" onclick="setLikert('q4',4,this)">4</button>
+                <button class="likert-btn" onclick="setLikert('q4',5,this)">5</button>
+              </div>
+            </div>
+
+            <div class="likert-row">
+              <div class="likert-question"><b>Desesperanza sobre el futuro</b><br><small style="color:var(--text-2)">Sentimiento de que las cosas no mejorarán</small></div>
+              <div class="likert-scale" data-question="q5">
+                <button class="likert-btn" onclick="setLikert('q5',1,this)">1</button>
+                <button class="likert-btn" onclick="setLikert('q5',2,this)">2</button>
+                <button class="likert-btn" onclick="setLikert('q5',3,this)">3</button>
+                <button class="likert-btn" onclick="setLikert('q5',4,this)">4</button>
+                <button class="likert-btn" onclick="setLikert('q5',5,this)">5</button>
+              </div>
+            </div>
+
+            <div class="likert-row">
+              <div class="likert-question"><b>Dificultad funcional</b><br><small style="color:var(--text-2)">Problemas para realizar actividades diarias (trabajo, cuidado, hogar)</small></div>
+              <div class="likert-scale" data-question="q6">
+                <button class="likert-btn" onclick="setLikert('q6',1,this)">1</button>
+                <button class="likert-btn" onclick="setLikert('q6',2,this)">2</button>
+                <button class="likert-btn" onclick="setLikert('q6',3,this)">3</button>
+                <button class="likert-btn" onclick="setLikert('q6',4,this)">4</button>
+                <button class="likert-btn" onclick="setLikert('q6',5,this)">5</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top:20px">
+            <label>Observaciones adicionales</label>
+            <textarea id="f-obs-psico" placeholder="Otros aspectos relevantes de la persona: contexto cultural, dinámicas familiares, preferencias de intervención…"></textarea>
+          </div>
+        </div>
+
+        <!-- PASO 7: RESULTADO (se muestra después del paso 6) -->
+        <div class="step-panel" data-step="7">
+          <div id="result-container"></div>
+        </div>
+
+      </div>
+
+      <div class="wizard-footer">
+        <button class="btn-nav prev" id="btn-prev" onclick="stepPrev()" disabled>← Anterior</button>
+        <div class="wizard-info">Paso <b><span id="wiz-current">1</span></b> de <b>6</b></div>
+        <button class="btn-nav next" id="btn-next" onclick="stepNext()">Siguiente →</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-map" class="view active">
+    <div class="view-header">
+      <div><div class="view-eyebrow">OPERACIÓN / TERRITORIO</div><h2>Mapa de respuesta</h2><p>Chocó y Risaralda <span class="heading-divider">/</span> Atención y seguimiento territorial</p></div>
+      <button class="btn-primary" onclick="setView('form')"><i data-lucide="plus" aria-hidden="true"></i>Nueva caracterización</button>
+    </div>
+    <div id="response-metrics" class="response-metrics" aria-label="Resumen de respuesta"></div>
+    <div class="ops-toolbar map-toolbar"><label class="map-search"><i data-lucide="search" aria-hidden="true"></i><input id="map-search" type="search" aria-label="Buscar en el mapa" placeholder="Nombre, municipio o ID" oninput="renderMapa()"></label><label class="archive-toggle"><input type="checkbox" id="show-closed" onchange="renderMapa()">Mostrar cerrados</label><div class="map-tools"><button class="icon-button" onclick="encuadrarMapa()" aria-label="Centrar territorio" title="Centrar territorio"><i data-lucide="scan" aria-hidden="true"></i></button><button class="icon-button" id="focus-toggle" onclick="toggleMapFocus()" aria-label="Ampliar mapa" title="Ampliar mapa" aria-pressed="false"><i data-lucide="maximize-2" aria-hidden="true"></i></button><button class="icon-button" id="motion-toggle" onclick="toggleMotion()" aria-label="Pausar animaciones" title="Pausar animaciones" aria-pressed="false"><i data-lucide="pause" aria-hidden="true"></i></button></div></div>
+    <div class="map-layout"><div class="map-stage"><div id="territory-map" aria-label="Mapa territorial de casos"></div><div class="map-hud"><span class="hud-status-dot"></span><span id="map-summary" aria-live="polite"></span></div><div class="map-coordinate-readout" id="map-coordinate-readout">CHOCÓ / RISARALDA</div><p id="map-status" role="status">Cargando cartografía…</p></div><aside class="map-list"><div class="queue-heading"><h3>Cola de respuesta</h3><span id="map-queue-count">0</span></div><div id="map-cases"></div><div id="map-inspector" class="map-inspector" hidden></div></aside></div>
+    <div class="map-legend"><span><i class="legend-dot priority-critical"></i>Crítico</span><span><i class="legend-dot priority-high"></i>Alto</span><span><i class="legend-dot priority-medium"></i>Seguimiento comunitario</span><span><i class="legend-dot closed"></i>Cerrado</span><span class="legend-note">Referencias municipales aproximadas</span></div>
+  </div>
+
+  <div id="view-bandeja" class="view">
+    <div class="view-header">
+      <div><h2>📋 Bandeja de casos</h2><p>Ruta sugerida por prioridad · gestión y seguimiento</p></div>
+    </div>
+    <div class="ops-toolbar"><input id="case-search" type="search" aria-label="Buscar caso" placeholder="Buscar nombre, municipio o ID" oninput="renderBandeja()"><select id="priority-filter" aria-label="Prioridad" onchange="setBandejaFilter(this.value)"><option value="all">Todas las prioridades</option><option value="critical">Crítico</option><option value="high">Alto</option><option value="medium">Seguimiento</option><option value="tbd">Sin clasificar</option></select><span id="case-count" aria-live="polite"></span></div>
+    <div id="kanban" class="kanban"></div>
+  </div>
+
+  <div id="view-reports" class="view">
+    <div class="view-header">
+      <div><h2>📊 Reportes territoriales</h2><p>Métricas por departamento, prioridad y actor institucional</p></div>
+      <div class="report-actions"><button class="ops-button" onclick="previsualizarInforme()"><i data-lucide="file-search" aria-hidden="true"></i>Ver PDF</button><button class="btn-primary" onclick="descargarInforme()"><i data-lucide="download" aria-hidden="true"></i>Descargar PDF</button></div>
+    </div>
+    <p id="report-scope" class="ops-muted"></p><div id="report-metrics" class="report-metrics"></div><div id="report-charts" class="report-charts"></div>
+  </div>
+</div>
+
+<div id="ops-notice" role="status" aria-live="polite" hidden></div>
+<dialog id="case-dialog" aria-labelledby="case-dialog-title"><div class="dialog-heading"><h2 id="case-dialog-title">Detalle del caso</h2><button class="ops-button" onclick="document.getElementById('case-dialog').close()" aria-label="Cerrar detalle">Cerrar</button></div><div id="case-detail"></div></dialog>
+<dialog id="pdf-dialog" aria-labelledby="pdf-dialog-title"><div class="dialog-heading"><h2 id="pdf-dialog-title">Informe territorial</h2><div class="report-actions"><a id="pdf-download" class="ops-button" download="TERRASANA_Informe.pdf">Descargar PDF</a><button class="icon-button" onclick="cerrarInforme()" aria-label="Cerrar informe" title="Cerrar informe"><i data-lucide="x"></i></button></div></div><div id="pdf-preview" role="region" aria-label="Vista previa del informe PDF"></div></dialog>
+
+<script>
+/* ================= ESTADO Y AUTH ================= */
+const K_USERS='terrasana:caracteriza:users';
+const K_SESSION='terrasana:caracteriza:session';
+const K_CASOS='terrasana:caracteriza:casos';
+
+let currentUser=null, currentView='map', currentDepFilter='all', bandejaFilter='all';
+let casos=[];
+
+async function sha256(s){const b=new TextEncoder().encode(s+'::terrasana::caracteriza::v1');const h=await crypto.subtle.digest('SHA-256',b);return Array.from(new Uint8Array(h)).map(x=>x.toString(16).padStart(2,'0')).join('');}
+function getUsers(){try{return JSON.parse(localStorage.getItem(K_USERS)||'[]')}catch{return[]}}
+function saveUsers(u){localStorage.setItem(K_USERS,JSON.stringify(u))}
+function getSession(){try{return JSON.parse(localStorage.getItem(K_SESSION)||'null')}catch{return null}}
+function setSession(s){localStorage.setItem(K_SESSION,JSON.stringify(s))}
+function clearSession(){localStorage.removeItem(K_SESSION)}
+function getCasos(){const value=JSON.parse(localStorage.getItem(K_CASOS)||'[]');if(!Array.isArray(value)||value.some(c=>!c||typeof c!=='object'||typeof c.id!=='string'))throw new Error('Formato de casos no válido');return value;}
+function saveCasos(c){localStorage.setItem(K_CASOS,JSON.stringify(c))}
+
+function isGovernmentEmail(e){const v=['.gov.co','.edu.co','.mil.co','.org.co'];const l=e.toLowerCase().trim();if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(l))return false;return v.some(x=>l.endsWith(x));}
+
+function switchTab(t){document.querySelectorAll('.auth-tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===t));document.querySelectorAll('.auth-form').forEach(f=>f.classList.remove('active'));document.getElementById('form-'+t).classList.add('active');clearErrors();}
+function selectRole(r){document.querySelectorAll('.role-btn').forEach(b=>b.classList.toggle('active',b.dataset.role===r))}
+function clearErrors(){document.getElementById('l-error').classList.remove('show');document.getElementById('r-error').classList.remove('show')}
+function showError(id,msg){const e=document.getElementById(id);e.textContent=msg;e.classList.add('show')}
+
+async function doRegister(){
+  clearErrors();
+  const n=document.getElementById('r-nombre').value.trim();
+  const e=document.getElementById('r-email').value.trim().toLowerCase();
+  const c=document.getElementById('r-cargo').value.trim();
+  const en=document.getElementById('r-entidad').value.trim();
+  const d=document.getElementById('r-depto').value;
+  const r=document.querySelector('.role-btn.active').dataset.role;
+  const p=document.getElementById('r-pass').value;
+  const p2=document.getElementById('r-pass2').value;
+  if(!n)return showError('r-error','Ingresa tu nombre completo.');
+  if(!isGovernmentEmail(e))return showError('r-error','El correo debe ser institucional (.gov.co, .edu.co, .mil.co, .org.co).');
+  if(!c)return showError('r-error','Ingresa tu cargo.');
+  if(!en)return showError('r-error','Ingresa el nombre de tu entidad.');
+  if(!d)return showError('r-error','Selecciona el territorio asignado.');
+  if(p.length<8)return showError('r-error','La contraseña debe tener mínimo 8 caracteres.');
+  if(!/[A-Za-z]/.test(p)||!/\d/.test(p))return showError('r-error','Combina letras y números en la contraseña.');
+  if(p!==p2)return showError('r-error','Las contraseñas no coinciden.');
+  const users=getUsers();
+  if(users.some(u=>u.email===e))return showError('r-error','Este correo ya está registrado.');
+  const ph=await sha256(p);
+  const user={id:'usr_'+Date.now(),nombre:n,email:e,cargo:c,entidad:en,depto:d,role:r,passwordHash:ph,createdAt:new Date().toISOString()};
+  users.push(user);saveUsers(users);
+  setSession({userId:user.id,loginAt:new Date().toISOString()});
+  enterApp(user);
+}
+
+async function doLogin(){
+  clearErrors();
+  const e=document.getElementById('l-email').value.trim().toLowerCase();
+  const p=document.getElementById('l-pass').value;
+  if(!e||!p)return showError('l-error','Ingresa correo y contraseña.');
+  const users=getUsers();
+  const u=users.find(x=>x.email===e);
+  if(!u)return showError('l-error','Este correo no está registrado. Regístrate primero o usa demo.');
+  const h=await sha256(p);
+  if(h!==u.passwordHash)return showError('l-error','Contraseña incorrecta.');
+  setSession({userId:u.id,loginAt:new Date().toISOString()});
+  enterApp(u);
+}
+
+function doDemoLogin(){
+  const demo={id:'demo_user',nombre:'Usuario Demo TERRASANA',email:'demo@terrasana.unad.edu.co',cargo:'Coordinador de demostración',entidad:'UNAD — Piloto Minciencias 2026',depto:'Ambos',role:'coordinador',passwordHash:'demo',isDemo:true,createdAt:new Date().toISOString()};
+  const users=getUsers();
+  if(!users.find(u=>u.id==='demo_user')){users.push(demo);saveUsers(users);}
+  setSession({userId:'demo_user',loginAt:new Date().toISOString(),isDemo:true});
+  enterApp(demo);
+}
+
+function doLogout(){
+  clearSession();
+  document.getElementById('app').classList.remove('active');
+  document.getElementById('auth').classList.add('active');
+  currentUser=null;casos=[];
+  document.getElementById('l-pass').value='';
+}
+
+function enterApp(user){
+  currentUser=user;
+  const roleName={brigada:'Brigada de campo',coordinador:'Coord. territorial UNAD',entidad:'Entidad gubernamental',estudiante:'Practicante UNAD'}[user.role]||user.role;
+  document.getElementById('user-name').textContent=user.nombre.split(' ').slice(0,2).join(' ');
+  document.getElementById('user-role').textContent=`${roleName} · ${user.depto}`;
+  document.getElementById('user-avatar').textContent=user.nombre.charAt(0).toUpperCase();
+  document.getElementById('auth').classList.remove('active');
+  document.getElementById('app').classList.add('active');
+  currentDepFilter=user.depto==='Ambos'?'all':user.depto;
+  document.querySelectorAll('.side-item[data-dep]').forEach(s=>s.classList.toggle('active',s.dataset.dep===currentDepFilter));
+  // Carga casos guardados
+  try{casos=getCasos();storageHealthy=true;}catch(error){casos=[];storageHealthy=false;notify('No se pudieron leer los casos guardados. El guardado está bloqueado para proteger el contenido existente.',true);}
+  updateStats();
+  setView('map');
+}
+
+function setView(v){
+  currentView=v;
+  document.querySelectorAll('.side-item[data-view]').forEach(s=>s.classList.toggle('active',s.dataset.view===v));
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  renderOperacion();
+  refreshIcons();
+}
+function filterDepartment(d){currentDepFilter=d;document.querySelectorAll('.side-item[data-dep]').forEach(s=>s.classList.toggle('active',s.dataset.dep===d));updateStats();renderOperacion();if(currentView==='map')encuadrarMapa();}
+function setBandejaFilter(f){bandejaFilter=f;document.getElementById('priority-filter').value=f;renderBandeja();}
+
+function updateStats(){
+  const visible=casosTerritorio();
+  const total=visible.length;
+  const cr=visible.filter(c=>c.priority==='critical').length;
+  const hi=visible.filter(c=>c.priority==='high').length;
+  const me=visible.filter(c=>c.priority==='medium').length;
+  document.getElementById('stat-total').textContent=total;
+  document.getElementById('stat-critical').textContent=cr;
+  document.getElementById('stat-high').textContent=hi;
+  document.getElementById('stat-medium').textContent=me;
+  document.getElementById('sb-critical').textContent=cr;
+  document.getElementById('sb-high').textContent=hi;
+  document.getElementById('sb-medium').textContent=me;
+  document.getElementById('storage-status').textContent=storageHealthy?`${casos.length} caso(s) guardado(s). Sin sincronización entre dispositivos.`:'Error de lectura. No se sobrescribirán los datos.';
+}
+
+/* ================= MUNICIPIOS DE CHOCÓ Y RISARALDA ================= */
+const MUNICIPIOS_CHOCO = [
+  {nombre:'Quibdó',lat:5.6947,lng:-76.6611},
+  {nombre:'Istmina',lat:5.1607,lng:-76.6849},
+  {nombre:'Condoto',lat:5.0906,lng:-76.6503},
+  {nombre:'Tadó',lat:5.2635,lng:-76.5620},
+  {nombre:'Bagadó',lat:5.4111,lng:-76.4147},
+  {nombre:'Riosucio (Chocó)',lat:7.4372,lng:-77.1114},
+  {nombre:'Nuquí',lat:5.7133,lng:-77.2705},
+  {nombre:'Bahía Solano',lat:6.2233,lng:-77.4025},
+  {nombre:'Acandí',lat:8.5147,lng:-77.2822},
+  {nombre:'Unguía',lat:8.0344,lng:-77.0947}
+];
+const MUNICIPIOS_RISARALDA = [
+  {nombre:'Pereira',lat:4.8133,lng:-75.6961},
+  {nombre:'Dosquebradas',lat:4.8333,lng:-75.6767},
+  {nombre:'Santa Rosa de Cabal',lat:4.8683,lng:-75.6236},
+  {nombre:'La Virginia',lat:4.8994,lng:-75.8797},
+  {nombre:'Marsella',lat:4.9367,lng:-75.7367},
+  {nombre:'Belén de Umbría',lat:5.2000,lng:-75.8667},
+  {nombre:'Apía',lat:5.1058,lng:-75.9433},
+  {nombre:'Balboa',lat:4.9500,lng:-75.9575},
+  {nombre:'Guática',lat:5.3164,lng:-75.7975},
+  {nombre:'Mistrató',lat:5.2967,lng:-75.8825},
+  {nombre:'Pueblo Rico',lat:5.2211,lng:-76.0300},
+  {nombre:'Quinchía',lat:5.3389,lng:-75.7297},
+  {nombre:'Santuario',lat:5.0731,lng:-75.9633}
+];
+
+function cargarMunicipios(){
+  const dep=document.getElementById('f-departamento').value;
+  const sel=document.getElementById('f-municipio');
+  sel.innerHTML='<option value="">Selecciona…</option>';
+  const lista=dep==='Chocó'?MUNICIPIOS_CHOCO:dep==='Risaralda'?MUNICIPIOS_RISARALDA:[];
+  lista.forEach(m=>{
+    const o=document.createElement('option');
+    o.value=m.nombre;o.textContent=m.nombre;
+    o.dataset.lat=m.lat;o.dataset.lng=m.lng;
+    sel.appendChild(o);
+  });
+}
+
+function togglePill(el,name,val){
+  document.querySelectorAll(`.pill input[name="${name}"]`).forEach(inp=>{
+    inp.checked=(inp.value===val);
+    inp.closest('.pill').classList.toggle('active',inp.value===val);
+  });
+}
+
+function toggleCheck(el,key){
+  // El label y el checkbox ya alternan el valor de forma nativa.
+  queueMicrotask(()=>{el.classList.toggle('checked',el.querySelector('input').checked);calcularScore();});
+}
+
+const likertResp={};
+function setLikert(q,val,btn){
+  likertResp[q]=val;
+  const parent=btn.parentElement;
+  parent.querySelectorAll('.likert-btn').forEach((b,i)=>{
+    b.classList.toggle('active',(i+1)===val);
+  });
+  calcularScore();
+}
+
+function capturarUbicacion(){
+  if(!navigator.geolocation){alert('Tu dispositivo no tiene GPS disponible.');return;}
+  navigator.geolocation.getCurrentPosition(
+    pos=>{
+      const lat=pos.coords.latitude.toFixed(6);
+      const lng=pos.coords.longitude.toFixed(6);
+      document.getElementById('f-coords').value=`${lat}, ${lng}`;
+      document.getElementById('f-coords').dataset.source='gps';
+      document.getElementById('f-coords').dataset.accuracy=String(pos.coords.accuracy);
+    },
+    err=>alert('No se pudo capturar la ubicación. Verifica los permisos del navegador.'),
+    {enableHighAccuracy:true,timeout:10000}
+  );
+}
+
+/* ================= MOTOR DE SEMÁFORO ================= */
+function getVal(name){const el=document.querySelector(`input[name="${name}"]:checked`);return el?el.value:null;}
+function getCheck(key){return document.querySelector(`input[data-key="${key}"]`)?.checked||false;}
+
+function calcularScore(){
+  let score=0, factores=[];
+
+  // ===== VIVIENDA (0-30) =====
+  const viv=getVal('f-vivienda');
+  if(viv==='destruida'){score+=25;factores.push({p:'critical',t:'Vivienda destruida totalmente'});}
+  else if(viv==='danada'){score+=15;factores.push({p:'high',t:'Vivienda con daños graves'});}
+  else if(viv==='habitable'){score+=5;factores.push({p:'medium',t:'Vivienda habitable con daños menores'});}
+
+  // Servicios (0-15) — cada servicio ausente suma
+  let servAusentes=0;
+  ['agua','luz','saneamiento','alimentos'].forEach(s=>{if(!getCheck(s))servAusentes++;});
+  if(servAusentes>=3){score+=15;factores.push({p:'critical',t:'Sin acceso a servicios básicos (agua, luz, saneamiento, alimentos)'});}
+  else if(servAusentes>=2){score+=10;factores.push({p:'high',t:'Acceso limitado a servicios básicos'});}
+  else if(servAusentes>=1){score+=5;factores.push({p:'medium',t:'Un servicio básico afectado'});}
+
+  const ref=getVal('f-refugio');
+  if(ref==='urgente'){score+=10;factores.push({p:'critical',t:'Requiere refugio urgente'});}
+  else if(ref==='pronto'){score+=5;factores.push({p:'high',t:'Requiere refugio pronto'});}
+
+  // ===== SALUD (0-40) =====
+  const les=getVal('f-lesiones');
+  if(les==='graves'){score+=20;factores.push({p:'critical',t:'Lesiones graves sin atender'});}
+  else if(les==='moderadas'){score+=12;factores.push({p:'high',t:'Lesiones moderadas'});}
+  else if(les==='leves'){score+=5;factores.push({p:'medium',t:'Lesiones leves'});}
+
+  if(getCheck('cronica')){score+=8;factores.push({p:'high',t:'Enfermedad crónica preexistente'});}
+  if(getCheck('discapacidad')){score+=8;factores.push({p:'high',t:'Persona con discapacidad'});}
+  if(getCheck('mental')){score+=7;factores.push({p:'high',t:'Antecedente de trastorno mental'});}
+  if(getCheck('embarazo')){score+=10;factores.push({p:'high',t:'Persona en gestación'});}
+
+  const med=getVal('f-medicacion');
+  if(med==='sin-acceso'){score+=12;factores.push({p:'critical',t:'Requiere medicación diaria y no tiene acceso'});}
+  else if(med==='limitado'){score+=7;factores.push({p:'high',t:'Acceso limitado a medicación'});}
+
+  if(getVal('f-eps')==='no'){score+=8;factores.push({p:'high',t:'No afiliado al sistema de salud'});}
+
+  // ===== FAMILIA Y ECONOMÍA (0-30) =====
+  const menores=parseInt(document.getElementById('f-menores')?.value||0);
+  const mayores=parseInt(document.getElementById('f-mayores')?.value||0);
+  if(menores>=3){score+=8;factores.push({p:'high',t:`${menores} menores de edad a cargo`});}
+  else if(menores>=1){score+=4;factores.push({p:'medium',t:`${menores} menor(es) de edad a cargo`});}
+  if(mayores>=1){score+=6;factores.push({p:'high',t:`${mayores} adulto(s) mayor(es) 60+ a cargo`});}
+
+  if(getVal('f-jefe')==='si'){score+=6;factores.push({p:'medium',t:'Jefe/a de hogar con responsabilidades'});}
+
+  const ing=getVal('f-ingresos');
+  if(ing==='sin-ingresos'){score+=12;factores.push({p:'critical',t:'Sin ingresos económicos'});}
+  else if(ing==='informales'){score+=7;factores.push({p:'high',t:'Trabajo informal'});}
+  else if(ing==='reducidos'){score+=3;factores.push({p:'medium',t:'Ingresos reducidos'});}
+
+  let perdidas=0;
+  ['perdida-empleo','perdida-cultivo','perdida-negocio','perdida-herramientas'].forEach(k=>{if(getCheck(k))perdidas++;});
+  if(perdidas>=2){score+=8;factores.push({p:'high',t:`Múltiples pérdidas económicas (${perdidas} tipos)`});}
+  else if(perdidas===1){score+=4;factores.push({p:'medium',t:'Pérdida económica registrada'});}
+
+  const apoyo=getVal('f-apoyo');
+  if(apoyo==='sin-red'){score+=10;factores.push({p:'critical',t:'Sin red de apoyo familiar/comunitaria'});}
+  else if(apoyo==='debil'){score+=6;factores.push({p:'high',t:'Red de apoyo débil'});}
+
+  // ===== PSICOSOCIAL (0-30) — Likert 1-5 en 6 preguntas =====
+  let psicoTotal=0, psicoRespondidas=0;
+  ['q1','q2','q3','q4','q5','q6'].forEach(q=>{if(likertResp[q]){psicoTotal+=likertResp[q];psicoRespondidas++;}});
+  if(psicoRespondidas>0){
+    const psicoPromedio=psicoTotal/psicoRespondidas;
+    const psicoScore=Math.round(psicoTotal-psicoRespondidas); // 0 a 24
+    score+=psicoScore;
+    if(psicoPromedio>=4){factores.push({p:'critical',t:'Afectación psicosocial severa (tamizaje)'});}
+    else if(psicoPromedio>=3){factores.push({p:'high',t:'Afectación psicosocial moderada'});}
+    else if(psicoPromedio>=2){factores.push({p:'medium',t:'Afectación psicosocial leve'});}
+  }
+
+  // ===== CLASIFICACIÓN =====
+  let priority='medium', priorityLabel='Seguimiento comunitario';
+  if(score>=60){priority='critical';priorityLabel='CRÍTICO — Atención urgente';}
+  else if(score>=30){priority='high';priorityLabel='ALTO — Prioridad alta';}
+  else if(score>=1){priority='medium';priorityLabel='MEDIO — Seguimiento';}
+  else if(Object.keys(likertResp).length===6){priority='medium';priorityLabel='Seguimiento comunitario';}
+  else{priority='tbd';priorityLabel='Sin datos suficientes';}
+
+  // Actualiza panel en vivo
+  document.getElementById('live-score').textContent=score;
+  const ind=document.getElementById('live-indicator');
+  const pri=document.getElementById('live-priority');
+  ind.className='score-indicator '+priority;
+  pri.className='score-priority '+priority;
+  if(priority==='critical'){ind.textContent='🔴';pri.textContent='CRÍTICO';}
+  else if(priority==='high'){ind.textContent='🟡';pri.textContent='ALTO';}
+  else if(priority==='medium'){ind.textContent='🟢';pri.textContent='SEGUIMIENTO';}
+  else{ind.textContent='?';pri.textContent='Sin datos suficientes';}
+
+  return {score,priority,priorityLabel,factores};
+}
+
+/* ================= NAVEGACIÓN DEL FORMULARIO ================= */
+let currentStep=1;
+const totalSteps=6;
+
+function showStep(n){
+  currentStep=n;
+  document.querySelectorAll('.step-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelector(`.step-panel[data-step="${n}"]`).classList.add('active');
+
+  // Actualiza barra de pasos
+  document.querySelectorAll('.wiz-step').forEach(s=>{
+    const st=parseInt(s.dataset.step);
+    s.classList.toggle('done',st<n);
+    s.classList.toggle('current',st===n);
+  });
+
+  // Título
+  const titles=['','Paso 1 de 6 · Datos personales','Paso 2 de 6 · Ubicación','Paso 3 de 6 · Vivienda','Paso 4 de 6 · Salud','Paso 5 de 6 · Familia y economía','Paso 6 de 6 · Afectación psicosocial','Resultado de caracterización'];
+  document.getElementById('wiz-title-top').textContent=titles[n];
+  document.getElementById('wiz-current').textContent=Math.min(n,6);
+
+  // Botones
+  document.getElementById('btn-prev').disabled=(n===1);
+  const btnNext=document.getElementById('btn-next');
+  if(n<6){btnNext.textContent='Siguiente →';btnNext.className='btn-nav next';btnNext.onclick=stepNext;}
+  else if(n===6){btnNext.textContent='✓ Calcular semáforo';btnNext.className='btn-nav save';btnNext.onclick=finalizarFormulario;}
+  else{btnNext.style.display='none';document.getElementById('btn-prev').style.display='none';}
+
+  // Scroll top del formulario
+  document.querySelector('.wizard-body').scrollTop=0;
+}
+
+function stepNext(){if(currentStep<6&&validarPaso(currentStep))showStep(currentStep+1);}
+function stepPrev(){if(currentStep>1){showStep(currentStep-1);document.getElementById('btn-next').style.display='';document.getElementById('btn-prev').style.display='';}}
+
+function finalizarFormulario(){
+  for(let step=1;step<=6;step++){if(!validarPaso(step)){showStep(step);return;}}
+  const resultado=calcularScore();
+  mostrarResultado(resultado);
+  showStep(7);
+  document.getElementById('btn-next').style.display='none';
+  document.getElementById('btn-prev').style.display='none';
+}
+
+/* ================= RESULTADO Y GUARDADO ================= */
+function mostrarResultado(r){
+  const nombres=document.getElementById('f-nombres').value+' '+document.getElementById('f-apellidos').value;
+  const muni=document.getElementById('f-municipio').value;
+  const dep=document.getElementById('f-departamento').value;
+
+  const rutas={
+    critical:{
+      icono:'🚨',
+      titulo:'PRIORIDAD CRÍTICA',
+      desc:'Requiere atención urgente por entidades gubernamentales y organismos de socorro',
+      actores:['🏛️ Alcaldía municipal','⚕️ Secretaría de Salud','🚒 Gestión del Riesgo','🚑 IPS de referencia','👶 ICBF (si aplica)']
+    },
+    high:{
+      icono:'⚠️',
+      titulo:'PRIORIDAD ALTA',
+      desc:'Caso asignado al Coordinador territorial UNAD para articulación con equipo especializado',
+      actores:['🎓 Coord. UNAD','👨‍⚕️ Psicólogo/a UNAD','👥 Trabajador/a social UNAD','🏥 IPS local']
+    },
+    medium:{
+      icono:'🌱',
+      titulo:'SEGUIMIENTO PSICOSOCIAL',
+      desc:'Caso asignado a estudiantes de práctica profesional UNAD para acompañamiento comunitario',
+      actores:['🎓 Practicante UNAD Psicología','🎓 Practicante UNAD Trabajo Social','🎓 Practicante UNAD Enfermería','👥 Líder comunitario']
+    }
+  };
+  const ruta=rutas[r.priority]||rutas.medium;
+
+  const html=`
+    <div class="result-card">
+      <div class="result-header ${r.priority}">
+        <div class="result-score">Puntaje: ${r.score}</div>
+        <div class="result-icon">${ruta.icono}</div>
+        <h2>${ruta.titulo}</h2>
+        <p>${escapeHTML(nombres || 'Persona caracterizada')} · ${escapeHTML(muni ? muni+', '+dep : 'Ubicación no registrada')}</p>
+      </div>
+
+      <div class="result-body">
+        <div class="result-section">
+          <h4>📋 Factores de priorización identificados</h4>
+          <ul class="result-list">
+            ${r.factores.length ? r.factores.map(f=>`<li><span class="check">${f.p==='critical'?'🔴':f.p==='high'?'🟡':'🟢'}</span> ${f.t}</li>`).join('') : '<li><em style="color:var(--muted)">Sin factores de riesgo relevantes registrados.</em></li>'}
+          </ul>
+        </div>
+
+        <div class="result-section">
+          <h4>🎯 Ruta de atención sugerida</h4>
+          <div class="route-box ${r.priority}">
+            <h5>${escapeHTML(rutaSugerida(r.priority))}</h5>
+            <p style="margin-top:8px">Pendiente de revisión profesional y contacto institucional. No se envían notificaciones externas.</p>
+            <div class="actors">
+              ${ruta.actores.map(a=>`<span class="actor">${a}</span>`).join('')}
+            </div>
+          </div>
+        </div>
+
+        <div class="result-actions">
+          <button class="btn-new-case" onclick="resetForm()">↺ Nueva caracterización</button>
+          <button class="btn-save-case" onclick="guardarCaso()">💾 Guardar y enviar a bandeja</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById('result-container').innerHTML=html;
+}
+
+function guardarCaso(){
+  if(currentStep!==7)return;
+  for(let step=1;step<=6;step++){if(!validarPaso(step)){showStep(step);return;}}
+  const r=calcularScore();
+  const muniSel=document.getElementById('f-municipio');
+  const opt=muniSel.options[muniSel.selectedIndex];
+  const coords=document.getElementById('f-coords').value.trim();
+
+  // Coordenadas: usa las capturadas o las del municipio
+  let lat=null,lng=null;
+  let locationSource='municipio';
+  if(coords){[lat,lng]=coords.split(',').map(x=>Number(x.trim()));locationSource=document.getElementById('f-coords').dataset.source||'manual';}
+  if(lat===null && opt && opt.dataset.lat){lat=Number(opt.dataset.lat);lng=Number(opt.dataset.lng);}
+
+  const caso={
+    id:'CASO-'+crypto.randomUUID(),
+    nombres:document.getElementById('f-nombres').value.trim(),
+    apellidos:document.getElementById('f-apellidos').value.trim(),
+    tipoDoc:document.getElementById('f-tipo-doc').value,
+    numDoc:document.getElementById('f-num-doc').value.trim(),
+    edad:parseInt(document.getElementById('f-edad').value)||null,
+    sexo:getVal('f-sexo'),
+    etnia:document.getElementById('f-etnia').value,
+    telefono:document.getElementById('f-telefono').value.trim(),
+    email:document.getElementById('f-email').value.trim(),
+    departamento:document.getElementById('f-departamento').value,
+    municipio:muniSel.value,
+    vereda:document.getElementById('f-vereda').value.trim(),
+    zona:getVal('f-zona'),
+    direccion:document.getElementById('f-direccion').value.trim(),
+    lat,lng,locationSource,
+    locationAccuracy:locationSource==='gps'?Number(document.getElementById('f-coords').dataset.accuracy)||null:null,
+    vivienda:getVal('f-vivienda'),
+    servicios:['agua','luz','saneamiento','gas','comunicaciones','alimentos'].filter(s=>getCheck(s)),
+    albergue:getVal('f-albergue'),
+    refugio:getVal('f-refugio'),
+    lesiones:getVal('f-lesiones'),
+    salud:['cronica','discapacidad','mental','embarazo'].filter(s=>getCheck(s)),
+    medicacion:getVal('f-medicacion'),
+    eps:getVal('f-eps'),
+    obsSalud:document.getElementById('f-obs-salud').value.trim(),
+    personasHogar:parseInt(document.getElementById('f-personas-hogar').value)||1,
+    menores:parseInt(document.getElementById('f-menores').value)||0,
+    mayores:parseInt(document.getElementById('f-mayores').value)||0,
+    jefeHogar:getVal('f-jefe'),
+    ingresos:getVal('f-ingresos'),
+    perdidas:['perdida-empleo','perdida-cultivo','perdida-negocio','perdida-herramientas'].filter(s=>getCheck(s)),
+    apoyo:getVal('f-apoyo'),
+    likert:{...likertResp},
+    obsPsico:document.getElementById('f-obs-psico').value.trim(),
+    score:r.score,
+    priority:r.priority,
+    factores:r.factores,
+    status:'pending',
+    asignadoA:null,
+    rutaSugerida:rutaSugerida(r.priority),
+    history:[],
+    caracterizadoPor:currentUser?.email||'sistema',
+    timestamp:new Date().toISOString()
+  };
+  if(!persistirCaso(caso))return;
+  currentDepFilter=caso.departamento;
+  bandejaFilter='all';
+  document.getElementById('case-search').value='';
+  document.getElementById('priority-filter').value='all';
+  document.querySelectorAll('.side-item[data-dep]').forEach(s=>s.classList.toggle('active',s.dataset.dep===currentDepFilter));
+  updateStats();
+  resetForm();
+  setView('bandeja');
+  notify(`Caso guardado: ${caso.nombres} ${caso.apellidos}. Ya aparece en la bandeja, el mapa y los reportes.`);
+}
+
+function resetForm(){
+  document.querySelectorAll('.form-wizard input:not([type=radio]):not([type=checkbox])').forEach(i=>i.value='');
+  document.querySelectorAll('.form-wizard input[type=radio],.form-wizard input[type=checkbox]').forEach(i=>i.checked=false);
+  document.querySelectorAll('.form-wizard textarea').forEach(t=>t.value='');
+  document.querySelectorAll('.form-wizard select').forEach(s=>s.selectedIndex=0);
+  delete document.getElementById('f-coords').dataset.source;
+  delete document.getElementById('f-coords').dataset.accuracy;
+  document.querySelectorAll('.pill.active').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.check-item.checked').forEach(c=>c.classList.remove('checked'));
+  document.querySelectorAll('.likert-btn.active').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#f-personas-hogar,#f-menores,#f-mayores').forEach(i=>i.value=i.id==='f-personas-hogar'?'1':'0');
+  Object.keys(likertResp).forEach(k=>delete likertResp[k]);
+  document.getElementById('f-departamento').value='';
+  document.getElementById('f-municipio').innerHTML='<option value="">Selecciona departamento primero</option>';
+  document.getElementById('btn-next').style.display='';
+  document.getElementById('btn-prev').style.display='';
+  showStep(1);
+  calcularScore();
+}
+
+/* ================= SPLASH ================= */
+async function runSplash(){
+  const fill=document.getElementById('splash-fill');
+  const msg=document.getElementById('splash-msg');
+  const steps=[
+    {pct:20,txt:'Iniciando sistema territorial…',wait:500},
+    {pct:45,txt:'Preparando el centro de respuesta…',wait:350},
+    {pct:70,txt:'Preparando las vistas territoriales…',wait:350},
+    {pct:90,txt:'Abriendo el espacio de trabajo…',wait:300},
+    {pct:100,txt:'Todo listo para comenzar',wait:250}
+  ];
+  refreshIcons();
+  for(const s of steps){fill.style.width=s.pct+'%';msg.textContent=s.txt;document.getElementById('splash-percent').textContent=s.pct+'%';document.getElementById('splash-progressbar').setAttribute('aria-valuenow',s.pct);await new Promise(r=>setTimeout(r,reducedMotion()?0:s.wait));}
+}
+
+async function bootApp(){
+  await runSplash();
+  const sp=document.getElementById('splash');
+  sp.classList.add('fade-out');
+  setTimeout(()=>sp.style.display='none',500);
+  const s=getSession();
+  if(s){const u=getUsers().find(u=>u.id===s.userId);if(u){enterApp(u);return;}}
+  document.getElementById('auth').classList.add('active');
+}
+
+window.addEventListener('load',bootApp);
+</script>
+<script src="operacion.js"></script>
+<script src="informe.js"></script>
+<script src="pwa.js"></script>
+</body>
+</html>
